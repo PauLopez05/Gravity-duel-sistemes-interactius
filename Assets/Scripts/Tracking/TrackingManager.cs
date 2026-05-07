@@ -196,6 +196,8 @@ public class TrackingManager : MonoBehaviour
                         {
                             //Calculates the calibrated rotation using the Calibration data
                             Quaternion calibratedPlayerRotation = CalibrationUtils.CalibratedRawRot(playerRotation, calibration);
+                            Vector3 euler = calibratedPlayerRotation.eulerAngles;
+                            calibratedPlayerRotation = Quaternion.Euler(euler.x, euler.y, 0f);
                             players[i].GetComponent<PlayerMovement>().SetRotation(calibratedPlayerRotation);
                             calibrationUI.SetPlayerXRot(i, calibratedPlayerRotation);
                         }
