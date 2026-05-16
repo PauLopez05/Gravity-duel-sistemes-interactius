@@ -1,4 +1,5 @@
 using UnityEngine;
+
 public class SpaceTractorBeam : MonoBehaviour
 {
     public Transform beamOrigin;
@@ -6,41 +7,71 @@ public class SpaceTractorBeam : MonoBehaviour
     public bool attract = true;
     public float beamStabilizerDrag = 2f;
 
+    [Header("Hover/Accumulate Settings")]
+    [Tooltip("The distance from the origin where rocks stop moving and just float.")]
+    public float holdDistance = 3f; 
+    public string targetTag = "Rocks";
+
+    // Visual Feedback variables...
+    public Renderer beamRenderer; 
+    public Color pullColor = new Color(0f, 0.5f, 1f, 0.5f); 
+    public Color pushColor = new Color(1f, 0.2f, 0f, 0.5f); 
+    public float colorChangeSpeed = 5f;
+
     private void Start()
     {
-        // Make sure the collider acts as an area (Trigger)
         GetComponent<Collider>().isTrigger = true;
-        
-        if (beamOrigin == null)
+        if (beamOrigin == null) beamOrigin = transform;
+        if (beamRenderer == null) beamRenderer = GetComponent<Renderer>();
+    }
+
+    private void Update()
+    {
+        if (beamRenderer != null && beamRenderer.material != null)
         {
-            beamOrigin = transform;
+            Color targetColor = attract ? pullColor : pushColor;
+            beamRenderer.material.color = Color.Lerp(beamRenderer.material.color, targetColor, Time.deltaTime * colorChangeSpeed);
         }
     }
-    private void OnTriggerStay(Collider other)
+
+private void OnTriggerStay(Collider other)
     {
         Rigidbody rb = other.attachedRigidbody;
 
         if (rb != null && !rb.isKinematic)
         {
-            // 1. Calculate the direction
             Vector3 directionTowardsOrigin = beamOrigin.position - rb.position;
+            float distance = directionTowardsOrigin.magnitude;
             Vector3 normalizedDirection = directionTowardsOrigin.normalized;
 
-            if (!attract)
+            bool isRockInHoldZone = other.CompareTag(targetTag) && distance <= holdDistance && attract;
+
+            if (!isRockInHoldZone)
             {
-                normalizedDirection = -normalizedDirection;
+                // --- MOVING ZONE ---
+                if (!attract)
+                {
+                    normalizedDirection = -normalizedDirection;
+                }
+                
+                // Pull or Push
+                rb.AddForce(normalizedDirection * force, ForceMode.Force);
+
+                // Normal space drag
+                Vector3 dragForce = -rb.linearVelocity * beamStabilizerDrag;
+                rb.AddForce(dragForce, ForceMode.Acceleration); 
             }
-
-            // 2. Apply the main pulling/pushing force
-            rb.AddForce(normalizedDirection * force, ForceMode.Force);
-
-            // 3. Space Stabilization (Artificial Drag)
-            // This applies a gentle counter-force based on the object's current speed.
-            // It prevents the object from accelerating endlessly and makes the abduction look smooth.
-            Vector3 dragForce = -rb.linearVelocity * beamStabilizerDrag;
-            
-            // We use ForceMode.Acceleration here so the stabilization affects heavy and light objects equally
-            rb.AddForce(dragForce, ForceMode.Acceleration); 
+            else
+            {
+                // --- HOLDING ZONE ---
+                // We removed the inward pull completely. 
+                // Instead, we apply a massive multiplier to the drag so they get stuck in "anti-gravity jelly".
+                // They will bump into each other gently and stop.
+                float jellyMultiplier = 5f; 
+                Vector3 heavyDrag = -rb.linearVelocity * (beamStabilizerDrag * jellyMultiplier);
+                
+                rb.AddForce(heavyDrag, ForceMode.Acceleration);
+            }
         }
     }
 }

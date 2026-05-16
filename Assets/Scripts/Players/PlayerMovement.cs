@@ -34,7 +34,11 @@ public class PlayerMovement : MonoBehaviour
     // Setter for rotation
     public void SetRotation(Quaternion rot)
     {
-        transform.rotation = rot;
+        //transform.rotation = rot;
+        Vector3 newrotation= rot.eulerAngles;
+        newrotation.z = 0;
+        newrotation.x = 0;
+        transform.rotation = Quaternion.Euler(newrotation);
     }
 
     // Getter for rotation
