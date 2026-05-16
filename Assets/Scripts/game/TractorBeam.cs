@@ -2,6 +2,10 @@ using UnityEngine;
 
 public class SpaceTractorBeam : MonoBehaviour
 {
+    [Header("Team Settings")]
+    [Tooltip("El equipo al que pertenece este rayo tractor (debe ser el mismo que el de tu nave).")]
+    public int team; 
+
     public Transform beamOrigin;
     public float force = 15f; 
     public bool attract = true;
@@ -34,12 +38,32 @@ public class SpaceTractorBeam : MonoBehaviour
         }
     }
 
-private void OnTriggerStay(Collider other)
+    private void OnTriggerStay(Collider other)
     {
         Rigidbody rb = other.attachedRigidbody;
 
         if (rb != null && !rb.isKinematic)
         {
+            // 1. Buscamos si el objeto tiene un script de equipo (usamos Projectile como base)
+            Projectile objProjectile = rb.GetComponent<Projectile>();
+
+            if (objProjectile != null)
+            {
+                // 2. Si ya tiene un equipo y NO es de nuestro equipo, lo ignoramos.
+                // (Permitimos afectar a los de nuestro equipo para que la nave no suelte la roca nada más atraparla).
+                if (objProjectile.team != Defines.NO_TEAM && objProjectile.team != this.team)
+                {
+                    return; // El rayo no le afecta en absoluto
+                }
+
+                // 3. Si el objeto es neutral, "lo vuelve del team"
+                if (objProjectile.team == Defines.NO_TEAM)
+                {
+                    objProjectile.team = this.team;
+                }
+            }
+
+            // --- Lógica original de movimiento ---
             Vector3 directionTowardsOrigin = beamOrigin.position - rb.position;
             float distance = directionTowardsOrigin.magnitude;
             Vector3 normalizedDirection = directionTowardsOrigin.normalized;
@@ -48,25 +72,14 @@ private void OnTriggerStay(Collider other)
 
             if (!isRockInHoldZone)
             {
-                // --- MOVING ZONE ---
-                if (!attract)
-                {
-                    normalizedDirection = -normalizedDirection;
-                }
+                if (!attract) normalizedDirection = -normalizedDirection;
                 
-                // Pull or Push
                 rb.AddForce(normalizedDirection * force, ForceMode.Force);
-
-                // Normal space drag
                 Vector3 dragForce = -rb.linearVelocity * beamStabilizerDrag;
                 rb.AddForce(dragForce, ForceMode.Acceleration); 
             }
             else
             {
-                // --- HOLDING ZONE ---
-                // We removed the inward pull completely. 
-                // Instead, we apply a massive multiplier to the drag so they get stuck in "anti-gravity jelly".
-                // They will bump into each other gently and stop.
                 float jellyMultiplier = 5f; 
                 Vector3 heavyDrag = -rb.linearVelocity * (beamStabilizerDrag * jellyMultiplier);
                 
