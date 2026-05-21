@@ -8,9 +8,11 @@ public class PlayerMovement : MonoBehaviour
     // Start is called before the first frame update
     public Quaternion q;
     public bool manual;
+
+    public SpaceTractorBeam stb;
     void Start()
     {
-
+     
     }
 
     // Update is called once per frame
@@ -22,7 +24,8 @@ public class PlayerMovement : MonoBehaviour
     // Setter for position
     public void SetPosition(Vector3 pos)
     {
-        transform.position = pos;
+        transform.position = new Vector3(pos.x, 0.0f, pos.z);
+        stb.y = pos.y;
     }
 
     // Getter for position

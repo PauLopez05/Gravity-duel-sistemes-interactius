@@ -9,12 +9,13 @@ public class Projectile : MonoBehaviour
     {
         if(team == Defines.NO_TEAM) return;
 
-        if(other.gameObject.tag == "Player") 
+        if(other.gameObject.tag == "Player" && team != other.gameObject.GetComponent<SpaceShip>().team) 
         {
             other.gameObject.GetComponent<SpaceShip>().TakeDamage(team, damage);
+            Destroy(gameObject);
         }
             
-        Destroy(gameObject);
+        
     }
 }
 

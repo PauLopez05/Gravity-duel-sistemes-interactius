@@ -21,6 +21,7 @@ public class SpaceTractorBeam : MonoBehaviour
     public Color pullColor = new Color(0f, 0.5f, 1f, 0.5f); 
     public Color pushColor = new Color(1f, 0.2f, 0f, 0.5f); 
     public float colorChangeSpeed = 5f;
+    public float y;
 
     private void Start()
     {
@@ -36,6 +37,8 @@ public class SpaceTractorBeam : MonoBehaviour
             Color targetColor = attract ? pullColor : pushColor;
             beamRenderer.material.color = Color.Lerp(beamRenderer.material.color, targetColor, Time.deltaTime * colorChangeSpeed);
         }
+
+        attract = y <= 1.5f;
     }
 
     private void OnTriggerStay(Collider other)
@@ -72,7 +75,7 @@ public class SpaceTractorBeam : MonoBehaviour
 
             if (!isRockInHoldZone)
             {
-                if (!attract) normalizedDirection = -normalizedDirection;
+                if (!attract) normalizedDirection = beamOrigin.transform.forward;
                 
                 rb.AddForce(normalizedDirection * force, ForceMode.Force);
                 Vector3 dragForce = -rb.linearVelocity * beamStabilizerDrag;
