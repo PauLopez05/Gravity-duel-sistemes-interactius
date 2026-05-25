@@ -1,80 +1,81 @@
 using UnityEngine;
 using UnityEngine.UI;
-using System.IO; // Required for saving to a text file
+using System.IO;
 
 public class LoadingZone : MonoBehaviour
 {
     [Header("UI Elements")]
-    public Image loadingCircle; 
+    [SerializeField] private Image loadingCircle;
 
     [Header("Calibration Settings")]
     [Tooltip("Time in seconds the player must stay still to calibrate.")]
-    public float calibrationDuration = 3f; 
-    
+    [SerializeField] private float calibrationDuration = 3f;
+
     [Tooltip("How much height jitter (up/down) is allowed per frame. Lower = stricter.")]
-    public float stabilityThreshold = 0.02f;
+    [SerializeField] private float stabilityThreshold = 0.02f;
+
+    [Header("Player Save")]
+    [Tooltip("Unique ID for this player, used in the save file name.")]
+    [SerializeField] private string playerId;
+
+    [Header("Game Flow")]
+    [Tooltip("Reference to the shared manager that starts the next scene when both players are ready.")]
+    [SerializeField] private CalibrationManager calibrationManager;
 
     private bool isPlayerInside = false;
+    private bool isFinished = false;
     private float calibrationTimer = 0f;
-    
-    private Transform playerTransform;
-    private float lastFrameHeight; // Stores the height from the previous frame
 
-    void Start()
+    private Transform playerTransform;
+    private float lastFrameHeight;
+
+    private void Start()
     {
-        Debug.Log(Application.persistentDataPath);
-        // Ensure the circle starts completely empty
         if (loadingCircle != null)
         {
             loadingCircle.fillAmount = 0f;
         }
     }
 
-    void Update()
+    private void Update()
     {
+        if (isFinished)
+        {
+            return;
+        }
+
         if (isPlayerInside && playerTransform != null)
         {
-            // 1. Get the current height of the spaceship
             float currentHeight = playerTransform.position.y;
-            
-            // 2. Calculate how much the height changed since the LAST frame
             float heightDifference = Mathf.Abs(currentHeight - lastFrameHeight);
 
-            // 3. Check if the player is moving too erratically
             if (heightDifference > stabilityThreshold)
             {
-                Debug.LogWarning("Calibration interrupted! Hold still.");
-                
-                // Penalize player: smoothly drain progress if they shake too much
                 calibrationTimer = Mathf.Max(0f, calibrationTimer - (Time.deltaTime * 2f));
             }
             else
             {
-                // Player is steady! Advance the 3-second timer
                 calibrationTimer += Time.deltaTime;
             }
 
-            // 4. Update the green circle fill progress
             if (loadingCircle != null)
             {
                 loadingCircle.fillAmount = calibrationTimer / calibrationDuration;
             }
 
-            // 5. Check if calibration is finished
             if (calibrationTimer >= calibrationDuration)
             {
-                StartGame();
+                FinishCalibration();
             }
 
-            // 6. Save the current height for the next frame's comparison
             lastFrameHeight = currentHeight;
         }
         else
         {
-            // If the player flies out of the zone, lose progress slowly
             if (calibrationTimer > 0f)
             {
                 calibrationTimer -= Time.deltaTime;
+
                 if (loadingCircle != null)
                 {
                     loadingCircle.fillAmount = calibrationTimer / calibrationDuration;
@@ -85,36 +86,40 @@ public class LoadingZone : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log("Something entered the trigger: " + other.gameObject.name);
-        // Check if the object entering the 3D trigger is tagged as the Player
-        if (other.CompareTag("Player"))
+        if (!other.CompareTag("Player"))
         {
-            isPlayerInside = true;
-            playerTransform = other.transform;
-            
-            // Initialize the height right as they enter so we don't get a massive jump on frame one
-            lastFrameHeight = playerTransform.position.y;
+            return;
         }
+
+        isPlayerInside = true;
+        playerTransform = other.transform;
+        lastFrameHeight = playerTransform.position.y;
     }
 
     private void OnTriggerExit(Collider other)
     {
-        // Check if the object leaving is the Player
-        if (other.CompareTag("Player"))
+        if (!other.CompareTag("Player"))
         {
-            isPlayerInside = false;
-            playerTransform = null;
+            return;
         }
+
+        isPlayerInside = false;
+        playerTransform = null;
     }
 
-    private void StartGame()
+    private void FinishCalibration()
     {
-        Debug.Log("Calibration Complete!");
+        if (isFinished)
+        {
+            return;
+        }
 
-        // 1. Define where to save the text file
-        string filePath = Path.Combine(Application.persistentDataPath, "CalibratedHeight.txt");
+        isFinished = true;
 
-        // 2. Write the last recorded height into the file
+        string safePlayerId = playerId.Trim();
+        string fileName = $"CalibratedHeight_{safePlayerId}.txt";
+        string filePath = Path.Combine(Application.persistentDataPath, fileName);
+
         using (StreamWriter writer = new StreamWriter(filePath))
         {
             writer.WriteLine(lastFrameHeight.ToString());
@@ -122,10 +127,16 @@ public class LoadingZone : MonoBehaviour
 
         Debug.Log($"Saved height ({lastFrameHeight}) to: {filePath}");
 
-        // 3. Trigger your scene load here when you are ready to implement it
-        // UnityEngine.SceneManagement.SceneManager.LoadScene("YourNextSceneName");
+        if (calibrationManager != null)
+        {
+            calibrationManager.MarkPlayerReady(playerId);
+        }
 
-        // Disable this script so calibration doesn't run again
-        this.enabled = false; 
+        if (loadingCircle != null)
+        {
+            loadingCircle.fillAmount = 1f;
+        }
+
+        enabled = false;
     }
 }
