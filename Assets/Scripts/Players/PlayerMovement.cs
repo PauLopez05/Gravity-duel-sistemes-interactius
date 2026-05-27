@@ -9,7 +9,8 @@ public class PlayerMovement : MonoBehaviour
     public Quaternion q;
     public bool manual;
 
-    public SpaceTractorBeam stb;
+    public float Y = 0;
+
     void Start()
     {
      
@@ -25,7 +26,7 @@ public class PlayerMovement : MonoBehaviour
     public void SetPosition(Vector3 pos)
     {
         transform.position = new Vector3(pos.x, 0.0f, pos.z);
-        stb.y = pos.y;
+        Y = pos.y;
     }
 
     // Getter for position

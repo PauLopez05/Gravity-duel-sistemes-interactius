@@ -1,10 +1,12 @@
+using System.IO;
 using UnityEngine;
 
 public class SpaceTractorBeam : MonoBehaviour
 {
     [Header("Team Settings")]
     [Tooltip("El equipo al que pertenece este rayo tractor (debe ser el mismo que el de tu nave).")]
-    public int team; 
+    public int team;
+    public string p;
 
     public Transform beamOrigin;
     public float force = 15f; 
@@ -21,13 +23,24 @@ public class SpaceTractorBeam : MonoBehaviour
     public Color pullColor = new Color(0f, 0.5f, 1f, 0.5f); 
     public Color pushColor = new Color(1f, 0.2f, 0f, 0.5f); 
     public float colorChangeSpeed = 5f;
-    public float y;
+    public PlayerMovement pm;
+    public float threshold;
 
     private void Start()
     {
         GetComponent<Collider>().isTrigger = true;
         if (beamOrigin == null) beamOrigin = transform;
         if (beamRenderer == null) beamRenderer = GetComponent<Renderer>();
+
+        string filePath = Path.Combine(Application.persistentDataPath, $"CalibratedHeight_{p}.txt");
+
+        if (File.Exists(filePath))
+        {
+            using (StreamReader sr = new StreamReader(filePath)) {
+                string savedHeightText = sr.ReadLine();
+                if (float.TryParse(savedHeightText, out float height)) threshold = height;
+            }
+        }
     }
 
     private void Update()
@@ -38,7 +51,7 @@ public class SpaceTractorBeam : MonoBehaviour
             beamRenderer.material.color = Color.Lerp(beamRenderer.material.color, targetColor, Time.deltaTime * colorChangeSpeed);
         }
 
-        attract = y <= 1.5f;
+        attract = pm.Y <= threshold;
     }
 
     private void OnTriggerStay(Collider other)
@@ -62,7 +75,7 @@ public class SpaceTractorBeam : MonoBehaviour
                 // 3. Si el objeto es neutral, "lo vuelve del team"
                 if (objProjectile.team == Defines.NO_TEAM)
                 {
-                    objProjectile.team = this.team;
+                    objProjectile.ChangeTeam(this.team);
                 }
             }
 

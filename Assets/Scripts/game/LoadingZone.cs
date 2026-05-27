@@ -26,7 +26,7 @@ public class LoadingZone : MonoBehaviour
     private bool isFinished = false;
     private float calibrationTimer = 0f;
 
-    private Transform playerTransform;
+    private PlayerMovement playerMovement;
     private float lastFrameHeight;
 
     private void Start()
@@ -44,9 +44,9 @@ public class LoadingZone : MonoBehaviour
             return;
         }
 
-        if (isPlayerInside && playerTransform != null)
+        if (isPlayerInside && playerMovement != null)
         {
-            float currentHeight = playerTransform.position.y;
+            float currentHeight = playerMovement.Y;
             float heightDifference = Mathf.Abs(currentHeight - lastFrameHeight);
 
             if (heightDifference > stabilityThreshold)
@@ -92,8 +92,8 @@ public class LoadingZone : MonoBehaviour
         }
 
         isPlayerInside = true;
-        playerTransform = other.transform;
-        lastFrameHeight = playerTransform.position.y;
+        playerMovement = other.GetComponent<PlayerMovement>();
+        lastFrameHeight = playerMovement.Y;
     }
 
     private void OnTriggerExit(Collider other)
@@ -104,7 +104,7 @@ public class LoadingZone : MonoBehaviour
         }
 
         isPlayerInside = false;
-        playerTransform = null;
+        playerMovement = null;
     }
 
     private void FinishCalibration()
