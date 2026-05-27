@@ -30,12 +30,14 @@ public class Projectile : MonoBehaviour
 
     void OnCollisionEnter(Collision other)
     {
+        if(other.gameObject.tag == "wall") Destroy(gameObject);
         if (team == Defines.NO_TEAM) return;
 
         if (other.gameObject.tag == "Player" && team != other.gameObject.GetComponent<SpaceShip>().team)
         {
             other.gameObject.GetComponent<SpaceShip>().TakeDamage(team, damage);
             Destroy(gameObject);
+
         }
     }
 
