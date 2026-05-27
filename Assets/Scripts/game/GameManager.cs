@@ -1,16 +1,51 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    [Header("UI")]
+    [SerializeField] private TMP_Text deathMessage;
+
+    [Header("Scene")]
+    [SerializeField] private string mainSceneName = "Inteface";
+
+    [Header("Timing")]
+    [SerializeField] private float returnDelay = 5f;
+
+    private bool isReturning;
+
+    private void OnEnable()
     {
-        
+        EventManager.OnPlayerDeath += HandlePlayerDeath;
     }
 
-    // Update is called once per frame
-    void Update()
+    private void OnDisable()
     {
-        
+        EventManager.OnPlayerDeath -= HandlePlayerDeath;
+    }
+
+    private void HandlePlayerDeath(int player)
+    {
+        if (isReturning)
+        {
+            return;
+        }
+
+        if (deathMessage != null)
+        {
+            int winner = (player == 1) ? 1 : 2;
+            deathMessage.text = "Player " + winner + " has won";
+            deathMessage.gameObject.SetActive(true);
+        }
+        StartCoroutine(ReturnToMainScene());
+    }
+
+    private IEnumerator ReturnToMainScene()
+    {
+        isReturning = true;
+        yield return new WaitForSeconds(returnDelay);
+        SceneManager.LoadScene(mainSceneName);
     }
 }

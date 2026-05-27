@@ -6,7 +6,7 @@ public class SpaceShip : MonoBehaviour
     public int team;
     public int hp;
     private bool isInvincible = false;
-    private Renderer pr;
+    public Renderer pr;
 
 
 
@@ -14,7 +14,6 @@ public class SpaceShip : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        pr = gameObject.GetComponent<Renderer>();
     }
 
 
