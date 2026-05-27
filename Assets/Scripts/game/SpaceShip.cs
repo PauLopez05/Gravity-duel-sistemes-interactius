@@ -8,16 +8,14 @@ public class SpaceShip : MonoBehaviour
     private bool isInvincible = false;
     public Renderer pr;
 
-
-
+    [Header("Weapon Settings")]
+    [Tooltip("Drag your 'test' beam child object here in the Inspector.")]
+    public GameObject BeamObject;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
     }
-
-
-
     public void TakeDamage(int team, int damage)
     {
         if(this.team == team || isInvincible) return;
@@ -32,10 +30,7 @@ public class SpaceShip : MonoBehaviour
 
         StartCoroutine(InvincibilityCoroutine());
     }
-
-
-
-    private IEnumerator InvincibilityCoroutine()
+        private IEnumerator InvincibilityCoroutine()
     {
         isInvincible = true;
 
@@ -52,5 +47,31 @@ public class SpaceShip : MonoBehaviour
 
         if (pr != null) pr.enabled = true;
         isInvincible = false; 
+    }
+
+    public void Heal(int healAmount)
+    {
+        hp +=healAmount;
+    }
+    public void JamWeapon(float duration)
+    {
+        if (BeamObject != null)
+        {
+            StartCoroutine(DisableBeamRoutine(duration));
+        }
+        else
+        {
+            Debug.LogWarning("You forgot to assign the 'test' object in the Inspector!");
+        }
+    }
+    private IEnumerator DisableBeamRoutine(float duration)
+    {
+        BeamObject.SetActive(false);
+        Debug.Log("Beam offline!");
+        
+        yield return new WaitForSeconds(duration);
+        
+        BeamObject.SetActive(true);
+        Debug.Log("Beam online!");
     }
 }

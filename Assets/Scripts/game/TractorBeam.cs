@@ -79,18 +79,25 @@ public class SpaceTractorBeam : MonoBehaviour
                 }
             }
 
-            // --- Lógica original de movimiento ---
             Vector3 directionTowardsOrigin = beamOrigin.position - rb.position;
             float distance = directionTowardsOrigin.magnitude;
             Vector3 normalizedDirection = directionTowardsOrigin.normalized;
 
-            bool isRockInHoldZone = other.CompareTag(targetTag) && distance <= holdDistance && attract;
+            bool isRockInHoldZone = (other.CompareTag(targetTag)||other.CompareTag("Missile")) && distance <= holdDistance && attract;
+            
 
             if (!isRockInHoldZone)
             {
-                if (!attract) normalizedDirection = beamOrigin.transform.forward;
-                
-                rb.AddForce(normalizedDirection * force, ForceMode.Force);
+                float f=force;
+                if (!attract){
+                    normalizedDirection = beamOrigin.transform.forward;
+                    if (other.CompareTag("Missile"))
+                    {
+                        f*=50;
+                        other.gameObject.transform.SetPositionAndRotation(other.gameObject.transform.position, beamOrigin.rotation);
+                    }
+                } 
+                rb.AddForce(normalizedDirection * f, ForceMode.Force);
                 Vector3 dragForce = -rb.linearVelocity * beamStabilizerDrag;
                 rb.AddForce(dragForce, ForceMode.Acceleration); 
             }
@@ -98,7 +105,6 @@ public class SpaceTractorBeam : MonoBehaviour
             {
                 float jellyMultiplier = 5f; 
                 Vector3 heavyDrag = -rb.linearVelocity * (beamStabilizerDrag * jellyMultiplier);
-                
                 rb.AddForce(heavyDrag, ForceMode.Acceleration);
             }
         }
