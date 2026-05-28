@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Unity.Mathematics;
 
 public class SpaceShip : MonoBehaviour
 {
@@ -51,7 +52,9 @@ public class SpaceShip : MonoBehaviour
 
     public void Heal(int healAmount)
     {
-        hp +=healAmount;
+        
+        hp += healAmount;
+        hp = math.min(hp,3);
     }
     public void JamWeapon(float duration)
     {

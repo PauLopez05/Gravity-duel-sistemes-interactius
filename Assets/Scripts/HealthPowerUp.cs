@@ -10,7 +10,6 @@ public class HealthPowerUp : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             SpaceShip player = other.GetComponent<SpaceShip>();
-            
             if (player != null)
             {
                 player.Heal(healAmount); 

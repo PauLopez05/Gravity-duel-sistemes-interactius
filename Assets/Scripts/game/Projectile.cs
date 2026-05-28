@@ -19,7 +19,7 @@ public class Projectile : MonoBehaviour
 
     void Awake()
     {
-        asteroidRenderer = GetComponent<Renderer>();
+        asteroidRenderer = GetComponentInChildren<Renderer>();
         propBlock = new MaterialPropertyBlock();
     }
 

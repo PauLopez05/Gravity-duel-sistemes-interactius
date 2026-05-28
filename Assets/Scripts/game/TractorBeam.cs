@@ -9,7 +9,7 @@ public class SpaceTractorBeam : MonoBehaviour
     public string p;
 
     public Transform beamOrigin;
-    public float force = 25f; 
+    public float force = 100f; 
     public bool attract = true;
     public float beamStabilizerDrag = 2f;
 

@@ -84,28 +84,35 @@ public class LoadingZone : MonoBehaviour
         }
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (!other.CompareTag("Player"))
+        private void OnTriggerEnter(Collider other)
         {
-            return;
+            if (!other.CompareTag("Player")) return;
+
+            var pm = other.GetComponent<PlayerMovement>();
+            var team = $"Player{other.GetComponent<SpaceShip>().team}";
+            if (pm == null) return;
+
+            // Replace 'Id' with the actual ID field/property on your PlayerMovement
+            if (!string.Equals(team, playerId, System.StringComparison.OrdinalIgnoreCase)) return;
+            isPlayerInside = true;
+            playerMovement = pm;
+            lastFrameHeight = playerMovement.Y;
         }
 
-        isPlayerInside = true;
-        playerMovement = other.GetComponent<PlayerMovement>();
-        lastFrameHeight = playerMovement.Y;
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (!other.CompareTag("Player"))
+        private void OnTriggerExit(Collider other)
         {
-            return;
-        }
+            if (!other.CompareTag("Player")) return;
 
-        isPlayerInside = false;
-        playerMovement = null;
-    }
+            var pm = other.GetComponent<PlayerMovement>();
+            var team = $"Player{other.GetComponent<SpaceShip>().team}";
+
+            if (pm == null) return;
+
+            if (!string.Equals(team, playerId, System.StringComparison.OrdinalIgnoreCase)) return;
+
+            isPlayerInside = false;
+            playerMovement = null;
+        }
 
     private void FinishCalibration()
     {
