@@ -13,6 +13,9 @@ public class SpaceShip : MonoBehaviour
     [Tooltip("Drag your 'test' beam child object here in the Inspector.")]
     public GameObject BeamObject;
 
+    public GameObject healthparticle;
+    public float healthParticleLifetime = 3f;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -52,9 +55,20 @@ public class SpaceShip : MonoBehaviour
 
     public void Heal(int healAmount)
     {
-        
+        if (healAmount <= 0) return;
+
         hp += healAmount;
-        hp = math.min(hp,3);
+        hp = math.min(hp, 3);
+
+        if (healthparticle != null)
+        {
+            GameObject fx = Instantiate(healthparticle, transform.position, Quaternion.identity);
+
+            ParticleSystem ps = fx.GetComponent<ParticleSystem>() ?? fx.GetComponentInChildren<ParticleSystem>();
+            if (ps != null) ps.Play();
+
+            Destroy(fx, healthParticleLifetime);
+        }
     }
     public void JamWeapon(float duration)
     {

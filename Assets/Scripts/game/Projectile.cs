@@ -16,6 +16,8 @@ public class Projectile : MonoBehaviour
 
     private Renderer asteroidRenderer;
     private MaterialPropertyBlock propBlock;
+    public GameObject hitParticles;
+    public float hitFxLifetime = 2f;
 
     void Awake()
     {
@@ -30,14 +32,36 @@ public class Projectile : MonoBehaviour
 
     void OnCollisionEnter(Collision other)
     {
-        if(other.gameObject.tag == "wall") Destroy(gameObject);
+
+        if (other.gameObject.CompareTag("wall"))
+        {
+            Destroy(gameObject);
+            return;
+        }
+
         if (team == Defines.NO_TEAM) return;
 
-        if (other.gameObject.tag == "Player" && team != other.gameObject.GetComponent<SpaceShip>().team)
+        if (other.gameObject.CompareTag("Player") && team != other.gameObject.GetComponent<SpaceShip>().team)
         {
+            if (other.contactCount > 0 && hitParticles != null)
+            {
+            ContactPoint contact = other.contacts[0];
+            GameObject fx = Instantiate(
+                hitParticles,
+                contact.point,
+                Quaternion.LookRotation(contact.normal)
+            );
+
+            // Optional: force play if the prefab has a ParticleSystem component
+            ParticleSystem ps = fx.GetComponent<ParticleSystem>();
+            if (ps == null) ps = fx.GetComponentInChildren<ParticleSystem>();
+            if (ps != null) ps.Play();
+
+            Destroy(fx, hitFxLifetime);
+            }
+            
             other.gameObject.GetComponent<SpaceShip>().TakeDamage(team, damage);
             Destroy(gameObject);
-
         }
     }
 

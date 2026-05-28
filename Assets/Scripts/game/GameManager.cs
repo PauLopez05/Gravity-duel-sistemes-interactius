@@ -36,7 +36,7 @@ public class GameManager : MonoBehaviour
         if (deathMessage != null)
         {
             int winner = (player == 1) ? 1 : 2;
-            deathMessage.text = "Player " + winner + " has won";
+            deathMessage.text = "Player " + winner + " wins";
             deathMessage.gameObject.SetActive(true);
         }
         StartCoroutine(ReturnToMainScene());

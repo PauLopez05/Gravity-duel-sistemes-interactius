@@ -58,7 +58,7 @@ public class SpaceTractorBeam : MonoBehaviour
     {
         Rigidbody rb = other.attachedRigidbody;
 
-        if (rb != null && !rb.isKinematic)
+        if (rb != null && !rb.isKinematic && (other.CompareTag(targetTag)||other.CompareTag("Missile")) )
         {
             // 1. Buscamos si el objeto tiene un script de equipo (usamos Projectile como base)
             Projectile objProjectile = rb.GetComponent<Projectile>();
@@ -83,7 +83,7 @@ public class SpaceTractorBeam : MonoBehaviour
             float distance = directionTowardsOrigin.magnitude;
             Vector3 normalizedDirection = directionTowardsOrigin.normalized;
 
-            bool isRockInHoldZone = (other.CompareTag(targetTag)||other.CompareTag("Missile")) && distance <= holdDistance && attract;
+            bool isRockInHoldZone =  distance <= holdDistance && attract;
             
 
             if (!isRockInHoldZone)
