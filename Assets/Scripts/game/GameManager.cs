@@ -7,13 +7,15 @@ public class GameManager : MonoBehaviour
 {
     [Header("UI")]
     [SerializeField] private TMP_Text deathMessage;
-
     [Header("Scene")]
     [SerializeField] private string mainSceneName = "Inteface";
 
     [Header("Timing")]
-    [SerializeField] private float returnDelay = 5f;
+    [SerializeField] private float returnDelay = 15f;
 
+    [Header("Win FX")]
+    [SerializeField] private GameObject confettiPrefab;
+    [SerializeField] private float confettiLifetime = 4f;
     private bool isReturning;
 
     private void OnEnable()
@@ -37,9 +39,40 @@ public class GameManager : MonoBehaviour
         {
             int winner = (player == 1) ? 1 : 2;
             deathMessage.text = "Player " + winner + " wins";
+            deathMessage.color = (winner == 1) ?  new Color(0.54f, 0.17f, 0.89f)
+                                        : new Color(0.80f, 0.36f, 0.36f);
             deathMessage.gameObject.SetActive(true);
         }
+        SpawnConfetti();
         StartCoroutine(ReturnToMainScene());
+    }
+
+    private void SpawnConfetti()
+    {
+        if (confettiPrefab == null)
+        {
+            return;
+        }
+
+        Vector3[] points = new Vector3[10];
+
+        for (int i = 0; i < 5; i++)
+        {
+            points[i] = new Vector3(30f, 2f + i * 2f, 0f);
+        }
+
+        for (int i = 0; i < 5; i++)
+        {
+            points[i + 5] = new Vector3(-40f, 2f + i * 2f, 0f);
+        }
+
+        foreach (Vector3 position in points)
+        {
+            GameObject fx = Instantiate(confettiPrefab, position, Quaternion.identity);
+            ParticleSystem ps = fx.GetComponent<ParticleSystem>() ?? fx.GetComponentInChildren<ParticleSystem>();
+            if (ps != null) ps.Play();
+            Destroy(fx, confettiLifetime);
+        }
     }
 
     private IEnumerator ReturnToMainScene()

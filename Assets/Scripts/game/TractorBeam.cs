@@ -18,19 +18,32 @@ public class SpaceTractorBeam : MonoBehaviour
     public float holdDistance = 3f; 
     public string targetTag = "Rocks";
 
-    // Visual Feedback variables...
+    [Header("Visual Feedback Settings")]
     public Renderer beamRenderer; 
-    public Color pullColor = new Color(0f, 0.5f, 1f, 0.5f); 
-    public Color pushColor = new Color(1f, 0.2f, 0f, 0.5f); 
+    [ColorUsage(true, true)] public Color pullColor = new Color(0f, 0.5f, 1f, 1f); // Activado soporte HDR
+    [ColorUsage(true, true)] public Color pushColor = new Color(1f, 0.2f, 0f, 1f); // Activado soporte HDR
     public float colorChangeSpeed = 5f;
+    
+    [Tooltip("Velocidad del flujo visual hacia adentro al atraer (Suele ser negativo).")]
+    public float pullScrollSpeed = -1.5f;
+    [Tooltip("Velocidad del flujo visual hacia afuera al empujar (Suele ser positivo).")]
+    public float pushScrollSpeed = 1.5f;
+
+    [Header("References & Calibration")]
     public PlayerMovement pm;
     public float threshold;
+
+    private Material beamMaterial;
 
     private void Start()
     {
         GetComponent<Collider>().isTrigger = true;
         if (beamOrigin == null) beamOrigin = transform;
+        
         if (beamRenderer == null) beamRenderer = GetComponent<Renderer>();
+        
+        // Cacheamos el material para modificar sus propiedades de forma óptima
+        if (beamRenderer != null) beamMaterial = beamRenderer.material;
 
         string filePath = Path.Combine(Application.persistentDataPath, $"CalibratedHeight_{p}.txt");
 
@@ -45,34 +58,44 @@ public class SpaceTractorBeam : MonoBehaviour
 
     private void Update()
     {
-        if (beamRenderer != null && beamRenderer.material != null)
-        {
-            Color targetColor = attract ? pullColor : pushColor;
-            beamRenderer.material.color = Color.Lerp(beamRenderer.material.color, targetColor, Time.deltaTime * colorChangeSpeed);
-        }
-
+        // 1. Primero actualizamos el estado de atracción
         attract = pm.Y <= threshold;
+
+        // 2. Controlamos las propiedades del Shader de forma dinámica
+        if (beamMaterial != null)
+        {
+            // Definimos objetivos según el estado actual
+            Color targetColor = attract ? pullColor : pushColor;
+            float targetSpeed = attract ? pullScrollSpeed : pushScrollSpeed;
+
+            // Transición suave para el color del shader (_Color)
+            Color currentColor = beamMaterial.GetColor("_Color");
+            Color lerpedColor = Color.Lerp(currentColor, targetColor, Time.deltaTime * colorChangeSpeed);
+            beamMaterial.SetColor("_Color", lerpedColor);
+
+            // Cambiamos la velocidad de scroll de la textura (_ScrollSpeed)
+            beamMaterial.SetFloat("_ScrollSpeed", targetSpeed);
+        }
     }
 
     private void OnTriggerStay(Collider other)
     {
         Rigidbody rb = other.attachedRigidbody;
 
-        if (rb != null && !rb.isKinematic && (other.CompareTag(targetTag)||other.CompareTag("Missile")) )
+        if (rb != null && !rb.isKinematic && (other.CompareTag(targetTag) || other.CompareTag("Missile")))
         {
-            // 1. Buscamos si el objeto tiene un script de equipo (usamos Projectile como base)
+            // 1. Buscamos si el objeto tiene un script de equipo
             Projectile objProjectile = rb.GetComponent<Projectile>();
 
             if (objProjectile != null)
             {
                 // 2. Si ya tiene un equipo y NO es de nuestro equipo, lo ignoramos.
-                // (Permitimos afectar a los de nuestro equipo para que la nave no suelte la roca nada más atraparla).
                 if (objProjectile.team != Defines.NO_TEAM && objProjectile.team != this.team)
                 {
-                    return; // El rayo no le afecta en absoluto
+                    return; 
                 }
 
-                // 3. Si el objeto es neutral, "lo vuelve del team"
+                // 3. Si el objeto es neutral, lo asignamos a nuestro equipo
                 if (objProjectile.team == Defines.NO_TEAM)
                 {
                     objProjectile.ChangeTeam(this.team);
@@ -83,17 +106,17 @@ public class SpaceTractorBeam : MonoBehaviour
             float distance = directionTowardsOrigin.magnitude;
             Vector3 normalizedDirection = directionTowardsOrigin.normalized;
 
-            bool isRockInHoldZone =  distance <= holdDistance && attract;
-            
+            bool isRockInHoldZone = distance <= holdDistance && attract;
 
             if (!isRockInHoldZone)
             {
-                float f=force;
-                if (!attract){
+                float f = force;
+                if (!attract)
+                {
                     normalizedDirection = beamOrigin.transform.forward;
                     if (other.CompareTag("Missile"))
                     {
-                        f*=50;
+                        f *= 50;
                         other.gameObject.transform.SetPositionAndRotation(other.gameObject.transform.position, beamOrigin.rotation);
                     }
                 } 

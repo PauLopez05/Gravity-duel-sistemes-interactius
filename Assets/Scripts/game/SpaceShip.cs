@@ -16,15 +16,28 @@ public class SpaceShip : MonoBehaviour
     public GameObject healthparticle;
     public float healthParticleLifetime = 3f;
 
+    public AudioClip healSfx;
+    public AudioClip damageSfx;
+    public AudioClip beamOffSfx;
+    private AudioSource audioSource;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        audioSource = GetComponent<AudioSource>();
     }
     public void TakeDamage(int team, int damage)
     {
         if(this.team == team || isInvincible) return;
 
         hp -= damage;
+
+        // Play the damage sound only if the player survived the hit
+        if (damageSfx != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(damageSfx, 3f);
+        }
+
         if(hp <= 0)
         {
             EventManager.TriggerPlayerDeath(team);
@@ -55,21 +68,27 @@ public class SpaceShip : MonoBehaviour
 
     public void Heal(int healAmount)
     {
-        if (healAmount <= 0) return;
 
+        if (healAmount <= 0) return;
+        int before = hp;
         hp += healAmount;
         hp = math.min(hp, 3);
+
+        if (hp > before && healSfx != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(healSfx,5f);
+        }
 
         if (healthparticle != null)
         {
             GameObject fx = Instantiate(healthparticle, transform.position, Quaternion.identity);
-
             ParticleSystem ps = fx.GetComponent<ParticleSystem>() ?? fx.GetComponentInChildren<ParticleSystem>();
             if (ps != null) ps.Play();
-
             Destroy(fx, healthParticleLifetime);
         }
     }
+
+
     public void JamWeapon(float duration)
     {
         if (BeamObject != null)
@@ -83,6 +102,11 @@ public class SpaceShip : MonoBehaviour
     }
     private IEnumerator DisableBeamRoutine(float duration)
     {
+
+        if (audioSource != null && beamOffSfx != null)
+        {
+            audioSource.PlayOneShot(beamOffSfx,3);
+        }
         BeamObject.SetActive(false);
         Debug.Log("Beam offline!");
         
