@@ -3,7 +3,6 @@ using UnityEngine;
 public class Perfect_loop : MonoBehaviour
 {
     public AudioSource source;
-    
     // Los valores que me pasaste
     public int startLoopSample = 0;
     public int endLoopSample = 0;
@@ -17,5 +16,14 @@ public class Perfect_loop : MonoBehaviour
         {
             source.timeSamples = startLoopSample;
         }
+    }
+    public void StopLoop()
+    {
+        if (source != null)
+        {
+            source.Stop();
+        }
+
+        enabled = false;
     }
 }

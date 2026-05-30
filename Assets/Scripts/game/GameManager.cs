@@ -11,13 +11,23 @@ public class GameManager : MonoBehaviour
     [SerializeField] private string mainSceneName = "Inteface";
 
     [Header("Timing")]
-    [SerializeField] private float returnDelay = 15f;
+    [SerializeField] private float returnDelay = 6f;
 
     [Header("Win FX")]
     [SerializeField] private GameObject confettiPrefab;
     [SerializeField] private float confettiLifetime = 4f;
     private bool isReturning;
 
+    [Header("Win SFX")]
+    [SerializeField] private AudioClip winSfx;
+    private AudioSource audioSource;
+
+    [Header("Audio")]
+    [SerializeField] private Perfect_loop backgroundLoop;
+    private void Awake()
+    {
+        audioSource = GetComponent<AudioSource>();
+    }
     private void OnEnable()
     {
         EventManager.OnPlayerDeath += HandlePlayerDeath;
@@ -34,6 +44,11 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
+        
+        if (backgroundLoop != null)
+        {
+            backgroundLoop.StopLoop();
+        }
 
         if (deathMessage != null)
         {
@@ -43,6 +58,12 @@ public class GameManager : MonoBehaviour
                                         : new Color(0.80f, 0.36f, 0.36f);
             deathMessage.gameObject.SetActive(true);
         }
+
+        if (audioSource != null && winSfx != null)
+        {
+            audioSource.PlayOneShot(winSfx);
+        }
+
         SpawnConfetti();
         StartCoroutine(ReturnToMainScene());
     }
