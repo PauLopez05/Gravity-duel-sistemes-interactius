@@ -92,7 +92,6 @@ public class LoadingZone : MonoBehaviour
             var team = $"Player{other.GetComponent<SpaceShip>().team}";
             if (pm == null) return;
 
-            // Replace 'Id' with the actual ID field/property on your PlayerMovement
             if (!string.Equals(team, playerId, System.StringComparison.OrdinalIgnoreCase)) return;
             isPlayerInside = true;
             playerMovement = pm;
